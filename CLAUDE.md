@@ -126,10 +126,81 @@ run_pipeline(
 
 ---
 
+## Orchestrator Protocol (Agent Teams)
+
+When the user asks to run the hotel pipeline, **act as Orchestrator using the Agent tool**. Do not call `pipeline.py` directly — spawn real Claude subagents instead.
+
+`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` is set in `.claude/settings.json`, enabling the Agent tool.
+
+---
+
+### Step 1 — Parallel: Setup Agent + Searcher Agent
+
+Spawn both agents simultaneously (two Agent tool calls in one message):
+
+**Setup Agent prompt:**
+> Set up the HotelAIExtractor environment. Run:
+> ```bash
+> mkdir -p output data data/logs && pip3 install -q openpyxl
+> echo "Setup complete"
+> ```
+> Report done when finished.
+
+**Searcher Agent prompt:**
+> You are the Searcher agent for HotelAIExtractor. Run the hotel search and return results as JSON.
+> ```bash
+> python3 scripts/search.py --agent --destination {destination} --checkin {checkin} --checkout {checkout} --max-price {max_price} --min-rating {min_rating} --max-results 20
+> ```
+> Capture the JSON array printed to stdout and return it verbatim.
+
+Wait for the Searcher to return the JSON hotel list before proceeding.
+
+---
+
+### Step 2 — Extractor Agent
+
+Spawn one Extractor agent with the raw hotel JSON from Step 1:
+
+**Extractor Agent prompt:**
+> You are the Extractor agent for HotelAIExtractor. Normalize this raw hotel list.
+> ```bash
+> python3 scripts/extract.py --nights {nights} --hotels '{raw_hotels_json}'
+> ```
+> Return the JSON array printed to stdout verbatim.
+
+---
+
+### Step 3 — Parallel: Processor Agent + Exporter Agent
+
+Spawn both agents simultaneously with the extracted hotel JSON from Step 2:
+
+**Processor Agent prompt:**
+> You are the Processor agent for HotelAIExtractor. Filter this hotel list by budget and rating.
+> ```bash
+> python3 scripts/process.py --max-price {max_price} --min-rating {min_rating} --hotels '{extracted_json}'
+> ```
+> Return the JSON array of hotels that passed filters verbatim.
+
+**Exporter Agent prompt:**
+> You are the Exporter agent for HotelAIExtractor. Write this hotel list to Excel.
+> ```bash
+> python3 scripts/export.py --path output/hotels_{destination}_{checkin}.xlsx --hotels '{extracted_json}'
+> ```
+> Return the JSON result verbatim.
+
+---
+
+### Step 4 — Sort and display
+
+Take the Processor output (passed hotels). Sort by `{sort_by}` (rating desc, or price asc). Print the final results table and confirm the Excel path.
+
+---
+
 ## Guidelines
 
-- `scripts/pipeline.py` is the single entry point — it orchestrates all agents internally
-- Each agent script exports one function: `search_hotels()`, `extract_one()`, `process_one()`, `append_hotel()`
+- When asked to run the pipeline: use the **Agent tool** to spawn subagents — this is what makes it Agent Teams
+- `scripts/pipeline.py` remains as a standalone Python fallback (e.g. for the tmux demo)
+- Each agent script exports one importable function AND a `__main__` CLI for agent use
 - Never over-engineer — each agent does one thing and exits
 - Keep `data/` for intermediate files, `output/` for final deliverables
 - `dangerouslyAllowAll: true` is set in `.claude/settings.json` — no permission prompts

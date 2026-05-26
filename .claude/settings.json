@@ -3,6 +3,7 @@
     // "ANTHROPIC_BASE_URL": "https://ai-gateway.fullscale.rocks",
     // "ANTHROPIC_API_KEY": "8db631e601272af5a9465348397725552214fa12c5dcc43d310b33c412828318",
     // "ANTHROPIC_MODEL": "claude-fast"
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
   "hasCompletedOnboarding": true,
   "preferredAuthMethod": "console",

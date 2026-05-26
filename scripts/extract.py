@@ -9,3 +9,15 @@ def extract_one(raw, nights=3):
         "location":        str(raw.get("location", "")).strip(),
         "nights":          nights,
     }
+
+
+if __name__ == "__main__":
+    import argparse, json
+    p = argparse.ArgumentParser(description="Extractor agent — normalizes raw hotel JSON")
+    p.add_argument("--hotels", required=True, help="JSON array of raw hotel dicts from Searcher")
+    p.add_argument("--nights", type=int, default=3)
+    args = p.parse_args()
+
+    raw_hotels = json.loads(args.hotels)
+    extracted  = [extract_one(h, args.nights) for h in raw_hotels]
+    print(json.dumps(extracted))

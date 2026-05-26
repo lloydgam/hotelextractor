@@ -1,0 +1,130 @@
+[
+  {
+    "hotel_name": "The Fullerton Hotel Singapore",
+    "price_usd": 148.0,
+    "total_price_usd": 444.0,
+    "rating": 9.1,
+    "location": "Marina Bay",
+    "nights": 3
+  },
+  {
+    "hotel_name": "Shangri-La Singapore",
+    "price_usd": 150.0,
+    "total_price_usd": 450.0,
+    "rating": 9.0,
+    "location": "Orchard",
+    "nights": 3
+  },
+  {
+    "hotel_name": "PARKROYAL COLLECTION Marina Bay",
+    "price_usd": 149.0,
+    "total_price_usd": 447.0,
+    "rating": 8.9,
+    "location": "Marina Bay",
+    "nights": 3
+  },
+  {
+    "hotel_name": "Andaz Singapore",
+    "price_usd": 145.0,
+    "total_price_usd": 435.0,
+    "rating": 8.9,
+    "location": "Bugis",
+    "nights": 3
+  },
+  {
+    "hotel_name": "Fairmont Singapore",
+    "price_usd": 148.0,
+    "total_price_usd": 444.0,
+    "rating": 8.8,
+    "location": "City Hall",
+    "nights": 3
+  },
+  {
+    "hotel_name": "COMO Metropolitan Singapore",
+    "price_usd": 140.0,
+    "total_price_usd": 420.0,
+    "rating": 8.8,
+    "location": "Orchard",
+    "nights": 3
+  },
+  {
+    "hotel_name": "Pan Pacific Singapore",
+    "price_usd": 148.0,
+    "total_price_usd": 444.0,
+    "rating": 8.8,
+    "location": "Marina Bay",
+    "nights": 3
+  },
+  {
+    "hotel_name": "Pullman Singapore Hill Street",
+    "price_usd": 142.0,
+    "total_price_usd": 426.0,
+    "rating": 8.7,
+    "location": "Clarke Quay",
+    "nights": 3
+  },
+  {
+    "hotel_name": "Grand Hyatt Singapore",
+    "price_usd": 145.0,
+    "total_price_usd": 435.0,
+    "rating": 8.7,
+    "location": "Orchard",
+    "nights": 3
+  },
+  {
+    "hotel_name": "Swiss\u00f4tel The Stamford",
+    "price_usd": 135.0,
+    "total_price_usd": 405.0,
+    "rating": 8.6,
+    "location": "City Hall",
+    "nights": 3
+  },
+  {
+    "hotel_name": "Hilton Singapore Orchard",
+    "price_usd": 138.0,
+    "total_price_usd": 414.0,
+    "rating": 8.5,
+    "location": "Orchard",
+    "nights": 3
+  },
+  {
+    "hotel_name": "Mandarin Orchard Singapore",
+    "price_usd": 145.0,
+    "total_price_usd": 435.0,
+    "rating": 8.5,
+    "location": "Orchard",
+    "nights": 3
+  },
+  {
+    "hotel_name": "Novotel Singapore on Stevens",
+    "price_usd": 108.0,
+    "total_price_usd": 324.0,
+    "rating": 8.3,
+    "location": "Orchard",
+    "nights": 3
+  },
+  {
+    "hotel_name": "Village Hotel Bugis",
+    "price_usd": 95.0,
+    "total_price_usd": 285.0,
+    "rating": 8.2,
+    "location": "Bugis",
+    "nights": 3
+  },
+  {
+    "hotel_name": "Hotel Jen Orchardgateway",
+    "price_usd": 98.0,
+    "total_price_usd": 294.0,
+    "rating": 8.1,
+    "location": "Orchard",
+    "nights": 3
+  },
+  {
+    "hotel_name": "Amara Singapore",
+    "price_usd": 92.0,
+    "total_price_usd": 276.0,
+    "rating": 8.1,
+    "location": "Tanjong Pagar",
+    "nights": 3
+  }
+]
