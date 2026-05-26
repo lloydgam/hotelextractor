@@ -1,208 +1,237 @@
-# Workshop Guide: HotelAIExtractor — Streaming Multi-Agent Pipeline Demo
+# Workshop Guide: HotelAIExtractor — Agent Teams + Streaming Pipeline Demo
 
 **Audience:** Developers, tech leads, product teams curious about AI agent orchestration  
 **Duration:** 30–45 minutes  
-**Goal:** Show how a team of specialized AI agents works as a streaming pipeline — each hotel processed the instant it is discovered, with Processor and Exporter running in parallel on every item
+**Goal:** Show Claude Code Agent Teams in action — real Claude subagents spawned by an Orchestrator — visualized live in a 5-pane tmux layout
 
 ---
 
 ## What You Will See
 
-A single natural-language request triggers a **streaming agent pipeline** that:
-1. Discovers hotels one at a time as the Searcher finds them
-2. Immediately normalizes each hotel via the Extractor
-3. Fires Processor and Exporter **simultaneously** on each hotel — no waiting
-4. Produces a formatted Excel report and a live results table
+Two demos, one project:
 
-No manual coding. No forms. No confirmation prompts.
-
----
-
-## The Big Idea: Why Streaming Multi-Agent?
-
-| Batch Pipeline (old) | Streaming Pipeline (new) |
+| Demo | What it shows |
 |---|---|
-| Collect all 20 → then extract | Extract each hotel the moment it is found |
-| Extract all → then process | Process fires immediately after extract |
-| Process all → then export | Exporter runs **in parallel** with Processor |
-| User waits for entire batch | Results visible as each hotel completes |
-| One failure blocks everything | Each hotel is independent |
-
-> **Key insight:** A streaming pipeline behaves like a production line — item 1 is already at the end before item 20 has even started.
+| **tmux Live Demo** | 5 panes light up in real time — one per agent — as each hotel flows through the pipeline |
+| **Agent Teams Demo** | Claude Code spawns real Claude subagents via the `Agent` tool — Searcher, Extractor, Processor, Exporter each run as independent Claude instances |
 
 ---
 
-## The Agent Team
+## The Big Picture: Agent Teams
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                        ORCHESTRATOR                          │
-│            (Claude — main session)                           │
-│  Receives filters → spawns Setup + Pipeline → prints table   │
-└──────────┬───────────────────────────────────────────────────┘
-           │
-     ┌─────▼──────┐      ┌──────────────────────────────────────────────┐
-     │   SETUP    │      │           STREAMING PIPELINE                 │
-     │   Agent    │      │                                              │
-     │ Installs   │      │  [Searcher] → yields hotel_1                 │
-     │ packages,  │      │                  └► [Extractor]              │
-     │ creates    │      │                        └► [Processor∥Exporter│
-     │ folders    │      │                                              │
-     └────────────┘      │  [Searcher] → yields hotel_2 (concurrent)   │
-                         │                  └► [Extractor]              │
-                         │                        └► [Processor∥Exporter│
-                         │                                              │
-                         │  ...repeats for all 20 hotels...            │
-                         │                                              │
-                         │  → Final sort → Excel rewrite → Print table │
-                         └──────────────────────────────────────────────┘
+User types one sentence
+        │
+        ▼
+   Orchestrator (Claude Code session)
+        │   CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
+        │
+        │   Agent tool ×2 — parallel
+        ├─────────────────────┐
+        │                     │
+   [Setup Agent]        [Searcher Agent]
+   installs deps        runs search.py --agent
+   creates folders      returns raw hotels JSON
+        │                     │
+        └──────┬──────────────┘
+               ▼
+        [Extractor Agent]
+        runs extract.py
+        returns normalized JSON
+               │
+        Agent tool ×2 — parallel
+        ├──────────────────────────┐
+        │                          │
+   [Processor Agent]          [Exporter Agent]
+   runs process.py            runs export.py
+   returns filtered JSON      writes Excel, confirms
+        │
+        ▼
+   Orchestrator sorts → prints results table
 ```
 
-**Setup runs in parallel with the first pipeline launch.**  
-**Within each hotel:** Extractor first (sequential), then Processor + Exporter simultaneously.  
-**All 20 hotels** flow through the pipeline concurrently.
+> **Key point:** These are real Claude instances. The Orchestrator uses the `Agent` tool — each subagent has its own context window, runs its Bash commands, and reports back. This is not Python threading.
+
+---
+
+## The tmux Visual Layout
+
+```
+┌────────────────────────────────────────────────────────────────────────────┐
+│  ORCHESTRATOR  (top 40%)                                                   │
+│  Streaming results appear here line by line                                │
+│  Final sorted table prints here when all 20 hotels complete               │
+├──────────────────┬──────────────────┬──────────────────┬───────────────────┤
+│  SEARCHER        │  EXTRACTOR       │  PROCESSOR       │  EXPORTER         │
+│  bright cyan     │  bright yellow   │  bright green    │  bright magenta   │
+│                  │                  │                  │                   │
+│  ← Capella       │  ← Capella       │  ← Capella       │  ← Capella [row 1]│
+│    $147/night    │    normalizing…  │    $147 ≤ $150   │    writing Excel… │
+│    ★9.5          │    ✓ $147 ★9.5   │    ★9.5 ≥ ★7.5   │    ✓ row 1 written│
+│                  │                  │    ✓ PASS        │                   │
+└──────────────────┴──────────────────┴──────────────────┴───────────────────┘
+```
+
+Each pane tails a live log file written by the pipeline in real time. Panes update independently and simultaneously.
 
 ---
 
 ## Step-by-Step Demo Walkthrough
 
-### Step 1 — Open the project in Claude Code
+### Step 1 — Prerequisites (before the audience arrives)
+
+```bash
+# Install tmux if needed
+brew install tmux
+
+# Install Python dep
+pip3 install openpyxl
+
+# Verify Claude Code has Agent Teams enabled
+cat .claude/settings.json | grep AGENT_TEAMS
+# Should show: "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+```
+
+---
+
+### Step 2 — Open the project and show CLAUDE.md (3 min)
 
 ```bash
 cd /Users/lloydgam/Documents/workgroup/demo/HotelAIExtractor
 claude
 ```
 
-> **Talking point:** "Claude Code reads `CLAUDE.md` automatically on startup. The entire agent team — their roles, rules, and pipeline order — is defined there. We don't configure anything manually."
+Open `CLAUDE.md` and walk through two sections:
+
+**Agent Team section:**
+> "Five named agents with one role each — Orchestrator, Setup, Searcher, Extractor, Processor, Exporter. Each is a real Claude instance with its own task."
+
+**Orchestrator Protocol section:**
+> "This tells Claude exactly how to spawn the agents — which ones run in parallel (Setup + Searcher), which are sequential (Extractor), and which fire simultaneously at the end (Processor + Exporter). The protocol drives behavior — we don't configure anything manually."
 
 ---
 
-### Step 2 — Show CLAUDE.md (2 min)
+### Step 3 — Launch the tmux live demo (the visual wow moment)
 
-Open `CLAUDE.md` and walk through:
-- The 5 named agents and what each one does
-- The streaming pipeline flow diagram
-- The "never ask, just run" rule
+Open a terminal and run:
 
-> **Talking point:** "This file is the operating manual for the agent team. Notice that the Processor and Exporter are marked as running in parallel — that's a deliberate architectural choice to eliminate waiting time."
+```bash
+bash scripts/run_demo.sh Bangkok 2026-06-01 2026-06-04 150 7.5 rating
+```
+
+Or for Singapore (shows filter action — some hotels exceed $150 and are filtered out):
+
+```bash
+bash scripts/run_demo.sh Singapore 2026-06-01 2026-06-04 150 7.5 rating
+```
+
+tmux will attach automatically. You will see the 5-pane layout appear.
+
+> **Talking point:** "Each pane is one agent. Watch them light up from left to right — Searcher finds a hotel, Extractor normalizes it, then Processor and Exporter fire simultaneously on the same hotel. The Searcher is already announcing the next hotel while the first one is still in flight."
 
 ---
 
-### Step 3 — Fire the search
+### Step 4 — Narrate the live output
 
-Paste this into Claude Code chat:
+Point out each line as it appears:
+
+| What you see | What to say |
+|---|---|
+| Searcher cyan pane: `← Capella Bangkok` | "Hotel discovered — the pipeline starts immediately, before the next hotel is found" |
+| Extractor yellow pane: `normalizing fields…` | "Name, price, rating, location — cleaned and typed" |
+| Processor green + Exporter magenta fire at same time | "These two run simultaneously — filtering and writing Excel at the same moment" |
+| Processor: `✓ PASS` or `✗ FILTERED` | "Singapore demo is great here — watch Raffles get filtered at $350, over the $150 cap" |
+| Exporter: `✓ row N written` | "Row written to Excel before the next hotel is even extracted" |
+| Orchestrator top pane: final table | "All 20 hotels sorted by rating — this prints after the final sort and Excel rewrite" |
+
+> **Talking point for Singapore:** "Raffles Hotel is $350/night — beautiful property, but over budget. The Processor catches it immediately and it never reaches the final table. The Exporter still writes it to Excel (raw data), but the final sort only includes passed hotels."
+
+---
+
+### Step 5 — Run Agent Teams mode in Claude Code (the conceptual wow moment)
+
+Switch to the Claude Code chat session. Paste:
 
 ```
 Search Bangkok hotels, check-in 2026-06-01, check-out 2026-06-04,
 max price $150, min rating 7.5, sort by rating
 ```
 
-> **Talking point:** "One sentence. No API keys, no configuration, no 'are you sure?' — it just runs."
+Watch Claude use the `Agent` tool to spawn subagents. Point out:
+
+- Claude reads the Orchestrator Protocol from `CLAUDE.md` without being told
+- It spawns Setup Agent and Searcher Agent in one message (parallel)
+- It waits for Searcher to return the hotel JSON
+- It spawns Extractor, then spawns Processor + Exporter simultaneously
+- Results come back from each agent and Orchestrator assembles the final table
+
+> **Talking point:** "In the tmux demo, those were Python threads simulating agents. In Agent Teams mode, those are real Claude instances — each one has its own context, makes its own tool calls, and reports back. The Orchestrator is just coordinating. This is the same pattern but with actual AI agents."
 
 ---
 
-### Step 4 — Watch the streaming output (the key demo moment)
-
-Point out the live output pattern as it appears:
-
-```
-[Searcher]  Found →  Capella Bangkok            $147.0/night  ★9.5
-         [Extractor] ↳ Capella Bangkok
-  [Processor ∥ Exporter] ↳ Capella Bangkok
-  ✓  Capella Bangkok  $147.0/night  ★9.5  Riverside
-
-[Searcher]  Found →  Mandarin Oriental Bangkok  $135.0/night  ★9.4
-         [Extractor] ↳ Mandarin Oriental Bangkok
-  [Processor ∥ Exporter] ↳ Mandarin Oriental Bangkok
-  ✓  Mandarin Oriental Bangkok  $135.0/night  ★9.4  Riverside
-```
-
-Narrate each line for the audience:
-
-| Line on screen | What it means |
-|---|---|
-| `[Searcher] Found →` | Hotel discovered — pipeline starts immediately |
-| `[Extractor] ↳` | Normalizing fields: price, rating, location |
-| `[Processor ∥ Exporter] ↳` | **Both running at the same time** on this hotel |
-| `✓ done` | Hotel fully processed and written to Excel |
-| Next `[Searcher] Found →` | New hotel already flowing through while prior one finishes |
-
-> **Talking point:** "Notice the Searcher is already announcing the next hotel while the previous one is still being processed. That's concurrent execution — the pipeline never idles."
-
----
-
-### Step 5 — Show the final results table
-
-After all 20 complete, the pipeline prints a sorted table directly in the terminal:
-
-```
-  #    Hotel Name                         $/night   Total     ★      Location
-  ──────────────────────────────────────────────────────────────────────────
-  1    Capella Bangkok                    $147.00   $441.00   9.5    Riverside
-  2    Mandarin Oriental Bangkok          $135.00   $405.00   9.4    Riverside
-  ...
-```
-
-> **Talking point:** "The final table is sorted by rating — that sort happens at the end after all hotels are collected, then the Excel is rewritten in order. Two phases: stream in, sort once."
-
----
-
-### Step 6 — Open the Excel file
+### Step 6 — Show the Excel output
 
 ```bash
 open output/hotels_Bangkok_2026-06-01.xlsx
 ```
 
 Point out:
-- Dark blue header row, alternating row shading
-- Columns: `#`, Hotel Name, Price/Night, Total Price (3n), Rating, Location
-- Exactly 20 rows, sorted by rating
+- Dark blue header row with white text
+- Alternating row shading (even rows light blue)
+- Columns: `#`, Hotel Name, Price/Night (USD), Total Price (3n), Rating, Location
+- Exactly 20 rows, sorted by the requested field
 - Header row frozen for scrolling
 
-> **Talking point:** "The Exporter wrote each row as the hotel completed. The final file is a polished deliverable ready to share — no post-processing needed."
+> **Talking point:** "The Exporter wrote each row as the hotel completed. The final file is a polished deliverable — not a raw CSV dump. This is production-ready output from a pipeline that ran in seconds."
 
 ---
 
-### Step 7 — Run a second search (optional, 5 min)
+### Step 7 — Optional: second search with different filters
 
 ```
-Search Phuket hotels, check-in 2026-07-10, check-out 2026-07-14,
-max price $200, min rating 8.0, sort by price
+Search Singapore hotels, check-in 2026-06-01, check-out 2026-06-04,
+max price $150, min rating 7.5, sort by price
 ```
 
-> **Talking point:** "Same pipeline, different destination and filters. Nothing needs to be reconfigured — the agents are stateless and reusable."
+This shows:
+- Filter rejection in action (Raffles, Marina Bay Sands, St. Regis all over $150)
+- A new Excel file created alongside the Bangkok one
+- Same pipeline, zero reconfiguration
 
 ---
 
 ## Key Demo Moments to Call Out
 
-1. **Streaming starts immediately** — the first hotel enters the pipeline before the Searcher has found the second. No batch wait.
-2. **`[Processor ∥ Exporter]`** — this line is the whole point. Two agents running simultaneously on one item.
-3. **Concurrent hotels** — multiple hotels are in the pipeline at the same time (up to 8 threads).
-4. **No questions asked** — Claude never pauses to confirm. The rules in `CLAUDE.md` drive behavior.
-5. **Constrained output** — exactly 20 results, no more.
+1. **Agent tool calls** — in Claude Code, watch the Agent tool fire twice simultaneously in Step 1 (Setup + Searcher). That's parallel agent spawning.
+2. **`[Processor ∥ Exporter]`** — the clearest visual proof of parallel execution — two panes update at the same instant.
+3. **Hotel filtered in real time** — Singapore's Raffles Hotel ($350) gets `✗ FILTERED` in the Processor pane immediately. No batch wait to find out it was rejected.
+4. **Concurrent hotels in flight** — in the tmux demo, watch the Searcher announce hotel 3 while hotels 1 and 2 are still in Extractor. Multiple hotels are in the pipeline simultaneously.
+5. **No questions asked** — Claude never pauses to confirm. The Orchestrator Protocol in `CLAUDE.md` drives all behavior.
 
 ---
 
 ## Common Questions from the Audience
 
-**Q: Why not just do it all in one agent?**  
-A: You could. But one agent handling search + extract + process + export has a bloated context window, is hard to debug when something goes wrong, and can't run stages in parallel. Splitting by role makes each agent focused, testable, and replaceable.
+**Q: What's the difference between Agent Teams and the Python pipeline?**  
+A: The Python `pipeline.py` uses threads to simulate agents in one process — fast and visual for demos. Agent Teams spawns real Claude instances via the `Agent` tool. Each subagent is an independent Claude session that can use any tool (Bash, Read, Write, web search). The architecture is identical; the execution layer is different.
 
-**Q: What does "Processor ∥ Exporter" actually mean?**  
-A: Two Python threads start at the same moment — one applying filters, one writing to Excel. They run simultaneously, so neither waits for the other.
+**Q: Why spawn real Claude subagents when Python threads are faster?**  
+A: Threads share memory and can't make AI decisions. Real subagents can handle ambiguous input, choose between approaches, call external APIs, and explain what they did. As tasks get more complex ("normalize this hotel but also flag if the name looks suspicious"), an AI agent handles it; a thread can't.
 
-**Q: What if the Searcher hits bot protection?**  
-A: The Searcher falls back to realistic mock data and the rest of the pipeline is completely unaffected. Only one agent needs to change to support a new data source.
+**Q: Why not do it all in one agent?**  
+A: One agent handling search + extract + process + export has a bloated context window, is hard to debug when something goes wrong, and can't run stages in parallel. Splitting by role makes each agent focused, testable, and replaceable.
 
-**Q: How do the agents share data?**  
-A: Within the pipeline, data passes as Python function return values (in-memory). The final output is written to `data/` (JSON) and `output/` (Excel). No shared database, no message queue.
+**Q: What does `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` do?**  
+A: It enables the `Agent` tool in Claude Code, which lets the main Claude session spawn and coordinate subagents. Without it, Claude can only use Bash, Read, Write, and similar single-session tools.
+
+**Q: How do agents share data?**  
+A: In Agent Teams mode, data passes as JSON strings in the agent prompts — the Orchestrator injects the Searcher's output JSON into the Extractor's prompt. In standalone Python mode, data flows as in-memory function return values. Final output goes to `data/` (JSON) and `output/` (Excel).
+
+**Q: Can this run on real hotel data?**  
+A: Yes — replace `scripts/search.py` with a real hotel API call (RapidAPI Hotels, Expedia Affiliate Network). All other agents are unchanged. The `--agent` JSON CLI interface is the only contract between the Searcher and the rest of the pipeline.
 
 **Q: Can this scale to 1000 hotels?**  
-A: Yes — increase `max_results` and `max_workers`. The streaming pattern means memory stays bounded; you never hold the full dataset in memory at once.
-
-**Q: What would a real production version look like?**  
-A: Replace the mock Searcher with a real hotel API (RapidAPI, Expedia API), add retry logic to each agent, and point the Exporter at a database or Google Sheets instead of Excel.
+A: In Python mode, yes — increase `max_results` and `max_workers`. The streaming pattern keeps memory bounded. In Agent Teams mode, you'd batch hotels across agents rather than one agent per hotel.
 
 ---
 
@@ -210,34 +239,52 @@ A: Replace the mock Searcher with a real hotel API (RapidAPI, Expedia API), add 
 
 ```
 HotelAIExtractor/
-├── README.md                              ← Project overview
-├── CLAUDE.md                              ← Agent team operating manual
+├── CLAUDE.md                              ← Agent team roles + Orchestrator Protocol
 ├── WORKSHOP_GUIDE.md                      ← This file
+├── README.md                              ← Project overview
 ├── .claude/
-│   └── settings.json                      ← dangerouslyAllowAll: true
+│   └── settings.json                      ← CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
+│                                             dangerouslyAllowAll: true
 ├── scripts/
-│   ├── pipeline.py                        ← Main entry point / Orchestrator
-│   ├── search.py                          ← Searcher Agent (streaming generator)
-│   ├── extract.py                         ← Extractor Agent (one hotel)
-│   ├── process.py                         ← Processor Agent (filter one hotel)
-│   └── export.py                          ← Exporter Agent (thread-safe Excel append)
+│   ├── pipeline.py                        ← Standalone Python pipeline (tmux mode)
+│   ├── search.py                          ← Searcher: generator + --agent JSON CLI
+│   ├── extract.py                         ← Extractor: normalize + --agent JSON CLI
+│   ├── process.py                         ← Processor: filter + --agent JSON CLI
+│   ├── export.py                          ← Exporter: Excel write + --agent JSON CLI
+│   ├── run_demo.sh                        ← Launch 5-pane tmux demo
+│   └── start_agent_pane.sh               ← Per-pane colored header + tail
 ├── data/
-│   └── processed_Bangkok_2026-06-01.json  ← Final sorted JSON
+│   ├── logs/                              ← searcher.log, extractor.log, etc.
+│   └── processed_*.json                   ← Sorted JSON output
 └── output/
-    └── hotels_Bangkok_2026-06-01.xlsx     ← Final Excel report
+    └── hotels_*.xlsx                      ← Final Excel reports
 ```
+
+---
+
+## Presenter Cheat Sheet
+
+| Action | Command |
+|---|---|
+| tmux demo — Bangkok | `bash scripts/run_demo.sh Bangkok 2026-06-01 2026-06-04 150 7.5 rating` |
+| tmux demo — Singapore (shows filtering) | `bash scripts/run_demo.sh Singapore 2026-06-01 2026-06-04 150 7.5 rating` |
+| Kill tmux session | `tmux kill-session -t hotel-demo` |
+| Open Claude Code | `claude` (in project root) |
+| Bangkok Agent Teams prompt | `Search Bangkok hotels, check-in 2026-06-01, check-out 2026-06-04, max price $150, min rating 7.5, sort by rating` |
+| Open Excel output | `open output/hotels_Bangkok_2026-06-01.xlsx` |
+| Python standalone | `python3 scripts/pipeline.py --destination Bangkok --checkin 2026-06-01 --checkout 2026-06-04` |
 
 ---
 
 ## Closing Talking Points
 
-- **Division of labor scales.** The same principle that makes human teams effective applies to AI agents — small, focused roles outperform generalists at scale.
-- **Streaming beats batching.** Don't collect everything before starting. Process each item as it arrives.
+- **Agent Teams is not a pattern for every task.** Simple scripts don't need agents. But when tasks involve judgment, ambiguity, or heterogeneous tools — real AI agents outperform threads.
+- **`CLAUDE.md` is the team contract.** Roles, rules, data flows, and the Orchestrator Protocol are all there. Any Claude session that opens this project knows exactly what to do without being told.
+- **Streaming beats batching.** Don't collect everything before starting. Process each item as it arrives. This applies to hotel data, customer records, documents, transactions — any stream.
 - **Parallel at the right level.** Not everything should be parallel — Extractor must finish before Processor starts. The skill is knowing which stages can overlap.
-- **`CLAUDE.md` is the team contract.** Roles, rules, and data flows are defined there. Any Claude session that opens this project knows exactly what to do.
-- **Agents are composable.** Swap the Searcher for a different data source, add a Notifier agent at the end, or split the Exporter into CSV + Excel — each change is isolated.
+- **Agents are composable.** Swap the Searcher for a different data source, add a Notifier agent, split the Exporter into CSV + database — each change is isolated to one agent.
 
-> "This isn't just a hotel search tool. It's a reusable pattern: streaming ingestion, per-item parallel processing, and clean typed handoffs. You can apply this to any workflow where items arrive one at a time and every second of latency matters."
+> "This isn't just a hotel search tool. It's two reusable patterns: Claude Code Agent Teams for real AI-to-AI coordination, and streaming per-item parallel processing for zero batch wait. You can apply both to any workflow where items arrive one at a time and every second of latency matters."
 
 ---
 
@@ -245,9 +292,10 @@ HotelAIExtractor/
 
 | Upgrade | What changes |
 |---|---|
-| Real hotel data (RapidAPI) | Searcher only |
-| Email the report on completion | Add Notifier agent after Exporter |
-| Run every morning at 7am | Add cron job calling `pipeline.py` |
-| Write to Google Sheets | Replace `export.py` |
+| Real hotel data (RapidAPI) | Searcher agent only |
+| Email the report on completion | Add Notifier agent to Orchestrator Protocol |
+| Run every morning at 7am | Cron job calling `pipeline.py` or Claude schedule |
+| Write to Google Sheets | Replace Exporter agent |
 | Add review sentiment scoring | Add Analyst agent between Extractor and Processor |
-| Multi-city parallel search | Spawn one pipeline per city simultaneously |
+| Multi-city parallel search | Spawn one Searcher Agent per city simultaneously |
+| Slack notification on completion | Add Slack agent after Exporter |
