@@ -1,0 +1,38 @@
+{
+  "env": {
+    // "ANTHROPIC_BASE_URL": "https://ai-gateway.fullscale.rocks",
+    // "ANTHROPIC_API_KEY": "8db631e601272af5a9465348397725552214fa12c5dcc43d310b33c412828318",
+    // "ANTHROPIC_MODEL": "claude-fast"
+  },
+  "hasCompletedOnboarding": true,
+  "preferredAuthMethod": "console",
+  "permissions": {
+    "dangerouslyAllowAll": true,
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(git:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(curl:*)",
+      "Bash(wget:*)",
+      "Bash(open:*)",
+      "Bash(pip:*)",
+      "Bash(python:*)",
+      "Bash(node:*)",
+      "Bash(npm:*)",
+      "Bash(brew:*)",
+      "WebSearch(*)",
+      "WebFetch(*)",
+      "Bash(pip3:*)",
+      "Bash(python3:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(sudo rm:*)",
+      "Bash(shutdown:*)",
+      "Bash(reboot:*)"
+    ]
+  }
+}

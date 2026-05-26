@@ -1,0 +1,142 @@
+[
+  {
+    "name": "Capella Bangkok",
+    "price": 147.0,
+    "rating": 9.5,
+    "location": "Riverside",
+    "source": "mock"
+  },
+  {
+    "name": "Siam Kempinski Hotel Bangkok",
+    "price": 149.0,
+    "rating": 9.3,
+    "location": "Siam",
+    "source": "mock"
+  },
+  {
+    "name": "Shangri-La Bangkok",
+    "price": 148.0,
+    "rating": 9.1,
+    "location": "Riverside",
+    "source": "mock"
+  },
+  {
+    "name": "Anantara Riverside Bangkok Resort",
+    "price": 143.0,
+    "rating": 9.0,
+    "location": "Riverside",
+    "source": "mock"
+  },
+  {
+    "name": "Arun Residence",
+    "price": 55.0,
+    "rating": 9.0,
+    "location": "Old City",
+    "source": "mock"
+  },
+  {
+    "name": "Centara Grand at CentralWorld",
+    "price": 140.0,
+    "rating": 8.9,
+    "location": "Siam",
+    "source": "mock"
+  },
+  {
+    "name": "The Westin Grande Sukhumvit",
+    "price": 145.0,
+    "rating": 8.8,
+    "location": "Sukhumvit",
+    "source": "mock"
+  },
+  {
+    "name": "Sala Rattanakosin Hotel",
+    "price": 110.0,
+    "rating": 8.8,
+    "location": "Old City",
+    "source": "mock"
+  },
+  {
+    "name": "Pullman Bangkok Hotel G",
+    "price": 130.0,
+    "rating": 8.7,
+    "location": "Silom",
+    "source": "mock"
+  },
+  {
+    "name": "Riva Surya Bangkok",
+    "price": 99.0,
+    "rating": 8.7,
+    "location": "Riverside",
+    "source": "mock"
+  },
+  {
+    "name": "The Sukhumvit Hotel Bangkok",
+    "price": 98.0,
+    "rating": 8.6,
+    "location": "Sukhumvit",
+    "source": "mock"
+  },
+  {
+    "name": "Amari Bangkok",
+    "price": 118.0,
+    "rating": 8.6,
+    "location": "Siam",
+    "source": "mock"
+  },
+  {
+    "name": "Novotel Bangkok on Siam Square",
+    "price": 108.0,
+    "rating": 8.5,
+    "location": "Siam",
+    "source": "mock"
+  },
+  {
+    "name": "Novotel Bangkok Sukhumvit 20",
+    "price": 112.0,
+    "rating": 8.4,
+    "location": "Sukhumvit",
+    "source": "mock"
+  },
+  {
+    "name": "Citadines Sukhumvit 8 Bangkok",
+    "price": 87.0,
+    "rating": 8.3,
+    "location": "Sukhumvit",
+    "source": "mock"
+  },
+  {
+    "name": "Holiday Inn Bangkok Silom",
+    "price": 95.0,
+    "rating": 8.2,
+    "location": "Silom",
+    "source": "mock"
+  },
+  {
+    "name": "ibis Bangkok Sukhumvit 24",
+    "price": 58.0,
+    "rating": 8.1,
+    "location": "Sukhumvit",
+    "source": "mock"
+  },
+  {
+    "name": "Mercure Bangkok Siam",
+    "price": 82.0,
+    "rating": 8.0,
+    "location": "Siam",
+    "source": "mock"
+  },
+  {
+    "name": "Narai Hotel Bangkok",
+    "price": 72.0,
+    "rating": 7.9,
+    "location": "Silom",
+    "source": "mock"
+  },
+  {
+    "name": "Tawana Bangkok Hotel",
+    "price": 65.0,
+    "rating": 7.7,
+    "location": "Silom",
+    "source": "mock"
+  }
+]
