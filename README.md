@@ -173,6 +173,65 @@ HotelAIExtractor/
 
 ---
 
+## Applying This Pattern to Your Software Development Lifecycle
+
+HotelAIExtractor is a template. Every concept maps directly to SDLC workflows: the task list enforces stage order, file handoffs keep context lean, and parallel tasks cut end-to-end time.
+
+### The pattern mapping
+
+| HotelAIExtractor | Your SDLC team |
+|------------------|----------------|
+| Lead (Orchestrator) | Lead that creates the team and synthesizes results |
+| Searcher | Issue/ticket analyst, codebase explorer |
+| Extractor | Spec writer, impact analyzer |
+| Processor | Code reviewer, quality gate, test runner |
+| Exporter | Implementer, PR creator, doc writer |
+| `data/raw_*.json` | `analysis/findings.md` — raw discovery output |
+| `data/extracted_*.json` | `specs/plan.md` — normalized work plan |
+| `data/processed_*.json` | `review/approved.md` — gated output |
+| `output/hotels_*.xlsx` | PR, commit, or release artifact |
+
+### Ready-made SDLC team templates
+
+| Team | Teammates | Parallel stages | What the Lead gets |
+|------|-----------|-----------------|---------------------|
+| **PR Code Review** | security-reviewer, performance-reviewer, test-reviewer | All three run simultaneously | Synthesized review report |
+| **Feature Implementation** | analyst, implementer, test-writer, reviewer | test-writer ∥ reviewer (both depend on implementer) | PR-ready code + tests |
+| **Bug Investigation** | hypothesis-A, hypothesis-B, hypothesis-C | All three run simultaneously | Surviving theory + fix |
+| **Release Prep** | changelog-writer, migration-checker, doc-updater | All three run simultaneously | Release PR |
+
+### How to build your own team
+
+Three things to define in `CLAUDE.md`:
+
+**1. Teammates and roles** — one sentence per teammate, one job each
+```
+- analyst: reads the ticket and codebase, writes analysis/findings.md
+- implementer: reads findings, writes the code change
+- test-writer: reads findings, writes the tests  (parallel with implementer)
+- reviewer: reads the code change, writes review/feedback.md
+```
+
+**2. Task list with dependencies** — draws the dependency graph
+```
+[explore]  → analyst         (no deps)
+[implement]→ implementer     (depends: explore)
+[test]     → test-writer     (depends: explore)    ← parallel with implement
+[review]   → reviewer        (depends: implement)
+```
+
+**3. File handoffs** — the contract between teammates
+```
+analysis/findings.md     ← analyst writes
+src/                     ← implementer writes
+tests/                   ← test-writer writes
+review/feedback.md       ← reviewer writes
+```
+
+The Lead sets up the team, monitors the task list, and synthesizes results. Teammates never talk through the Lead — they read each other's files.
+
+---
+
 ## Note on Data Source
 
 The Searcher uses realistic mock data modeled on real Bangkok and Singapore hotels. To use live data, replace `scripts/search.py` with calls to a hotel data API (e.g. RapidAPI Hotels, Expedia Affiliate Network). The output file schema is the contract — all other teammates are unchanged.

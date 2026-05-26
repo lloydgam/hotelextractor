@@ -252,6 +252,157 @@ HotelAIExtractor/
 
 ---
 
+## Build Your Own SDLC Agent Team
+
+HotelAIExtractor is a template. This section shows how to transfer every concept — task list, file handoffs, parallel stages — directly into software development workflows.
+
+### Pattern mapping
+
+| HotelAIExtractor concept | SDLC equivalent |
+|--------------------------|-----------------|
+| Lead (Orchestrator) | Creates the team, monitors the task list, synthesizes the result |
+| Searcher teammate | Issue analyst, ticket reader, codebase explorer |
+| Extractor teammate | Spec writer, impact mapper, plan generator |
+| Processor teammate | Code reviewer, quality gate, security auditor |
+| Exporter teammate | Implementer, PR creator, doc writer |
+| `data/raw_*.json` | `analysis/findings.md` — raw discovery |
+| `data/extracted_*.json` | `specs/plan.md` — normalized work plan |
+| `data/processed_*.json` | `review/approved.md` — gated output |
+| `output/hotels_*.xlsx` | Commit, PR, or release artifact |
+| `process` ∥ `export` | Any two teammates with the same dependency but no dependency on each other |
+
+---
+
+### Team Template 1: PR Code Review
+
+Three reviewers with distinct lenses, all running in parallel. Lead synthesizes.
+
+**Teammates:** security-reviewer, performance-reviewer, test-reviewer
+
+**Task list:**
+```
+[security-review]     → security-reviewer      (no deps)   ┐
+[performance-review]  → performance-reviewer   (no deps)   ├─ all parallel
+[test-review]         → test-reviewer          (no deps)   ┘
+[synthesize]          → lead                   (depends: all three)
+```
+
+**File handoffs:**
+```
+review/security.md      ← security-reviewer writes
+review/performance.md   ← performance-reviewer writes
+review/tests.md         ← test-reviewer writes
+review/summary.md       ← lead writes (synthesized)
+```
+
+**CLAUDE.md Orchestrator Protocol snippet:**
+```
+Create a PR review team with 3 teammates: security-reviewer, performance-reviewer, test-reviewer.
+
+Tasks (all parallel, no dependencies):
+- [security-review]:     Read the PR diff, audit for vulnerabilities, write review/security.md
+- [performance-review]:  Read the PR diff, flag performance regressions, write review/performance.md
+- [test-review]:         Read the PR diff, assess coverage gaps, write review/tests.md
+
+After all three complete: read their output files and write a synthesized review/summary.md.
+Post the summary as a PR comment.
+```
+
+---
+
+### Team Template 2: Feature Implementation
+
+Analyst first, then implementer and test-writer in parallel, reviewer last.
+
+**Teammates:** analyst, implementer, test-writer, reviewer
+
+**Task list:**
+```
+[explore]    → analyst      (no deps)
+[implement]  → implementer  (depends: explore)   ┐
+[test]       → test-writer  (depends: explore)   ┘ parallel
+[review]     → reviewer     (depends: implement)
+```
+
+**File handoffs:**
+```
+analysis/findings.md    ← analyst writes     (codebase map, affected files, risks)
+src/                    ← implementer writes  (code changes)
+tests/                  ← test-writer writes  (new/updated tests)
+review/feedback.md      ← reviewer writes     (quality gate)
+```
+
+**CLAUDE.md Orchestrator Protocol snippet:**
+```
+Create a feature team with 4 teammates: analyst, implementer, test-writer, reviewer.
+
+Tasks:
+- [explore]:    Read the ticket and codebase. Write analysis/findings.md with: affected files,
+                suggested approach, risks. No code changes.
+- [implement]:  Read analysis/findings.md. Write the code changes. (depends: explore)
+- [test]:       Read analysis/findings.md. Write tests for the new behavior. (depends: explore)
+- [review]:     Read the code changes in src/. Write review/feedback.md with pass/fail verdict. 
+                (depends: implement)
+
+After all tasks complete: if review passes, create the PR. If not, ask implementer to address feedback.
+```
+
+> **Workshop talking point:** "The analyst and implementer are sequential — you can't implement before you understand the problem. But test-writer and implementer are parallel — tests are written from the spec, not from the code. Same pattern as `process` ∥ `export` in the hotel pipeline."
+
+---
+
+### Team Template 3: Bug Investigation (Competing Hypotheses)
+
+Multiple teammates investigate different theories simultaneously. The one that survives is the root cause.
+
+**Teammates:** hypothesis-network, hypothesis-state, hypothesis-concurrency (or name them after your theories)
+
+**Task list:**
+```
+[investigate-network]     → hypothesis-network      (no deps)  ┐
+[investigate-state]       → hypothesis-state        (no deps)  ├─ all parallel
+[investigate-concurrency] → hypothesis-concurrency  (no deps)  ┘
+```
+
+Teammates can message each other directly to challenge findings as they work.
+
+**File handoffs:**
+```
+debug/network-findings.md      ← hypothesis-network writes
+debug/state-findings.md        ← hypothesis-state writes
+debug/concurrency-findings.md  ← hypothesis-concurrency writes
+```
+
+**CLAUDE.md Orchestrator Protocol snippet:**
+```
+Create a bug investigation team with 3 teammates. Each investigates a different root cause theory
+for [the bug]. Have them message each other to challenge each other's findings as they work.
+
+Teammates:
+- hypothesis-network:     Investigate network/timeout issues. Write debug/network-findings.md.
+- hypothesis-state:       Investigate shared state / race conditions. Write debug/state-findings.md.
+- hypothesis-concurrency: Investigate thread safety. Write debug/concurrency-findings.md.
+
+After all complete: read findings, identify which theory has the strongest evidence, implement the fix.
+```
+
+> **Workshop talking point:** "The docs specifically call out the competing-hypothesis pattern as one of the strongest Agent Teams use cases. A single investigator anchors on the first plausible theory. Teammates actively trying to disprove each other converge on the real root cause faster."
+
+---
+
+### The Three Rules for Designing Any SDLC Team
+
+**Rule 1: One teammate, one concern.**
+Never give a teammate two jobs. Analyst does not write code. Reviewer does not run tests. Small, focused roles are easier to redirect and replace.
+
+**Rule 2: Draw the dependency graph before writing the protocol.**
+Ask: "What can run before I have X?" If two tasks share a dependency but don't depend on each other — like test-writer and implementer both depending on analyst — they run in parallel. Draw it out, then write the task list.
+
+**Rule 3: Files are the API between teammates.**
+Decide the output file for each teammate before you write their instructions. The file is the contract. Any teammate that consumes it reads that file path — not a message, not a return value. This keeps context lean and makes every handoff auditable.
+
+---
+
 ## Ideas to Show After the Demo
 
 | Upgrade | What changes |
