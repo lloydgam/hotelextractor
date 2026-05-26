@@ -1,16 +1,16 @@
 # HotelAIExtractor
 
-**A hotel price intelligence system powered by Claude Code Agent Teams.**
+**A hotel price intelligence system built on Claude Code Agent Teams.**
 
-One sentence triggers a coordinated team of real Claude agents — each with one role — that search, extract, filter, and export hotel data through a pipeline of typed JSON handoffs.
+One sentence triggers a lead Claude session that creates a 4-teammate agent team. Each teammate owns one stage, claims its task from a shared task list, communicates through files, and reports back — with Processor and Exporter running simultaneously the moment Extractor finishes.
 
 ---
 
 ## Purpose
 
-HotelAIExtractor demonstrates **Claude Code Agent Teams**: an Orchestrator spawning specialized Claude subagents via the `Agent` tool, coordinating parallel execution, and assembling a final result — all from a single natural-language request.
+HotelAIExtractor demonstrates **Claude Code Agent Teams**: a lead session creating full Claude Code teammates that coordinate through a shared task list, claim work independently, and communicate directly — not through the lead's context.
 
-The hotel search is the use case. The pattern — Orchestrator + specialized agents + parallel stages + typed handoffs — applies to any multi-step workflow.
+The hotel search is the use case. The pattern — lead + named teammates + shared task list + file-based handoffs — applies to any multi-step workflow with parallel stages.
 
 ---
 
@@ -20,34 +20,47 @@ The hotel search is the use case. The pattern — Orchestrator + specialized age
 User types one sentence
         │
         ▼
-   Orchestrator (Claude Code session)
+   Lead (Orchestrator Claude Code session)
         │   CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
+        │   teammateMode: tmux
         │
-        │   Agent tool ×2 — parallel
-        ├── Setup Agent        → installs deps, creates folders
-        └── Searcher Agent     → discovers hotels, returns raw JSON
-                │
-                ▼
-           Extractor Agent     → normalizes: name, price, rating, location
-                │
-                │   Agent tool ×2 — parallel
-                ├── Processor Agent  → applies filters, returns passed hotels
-                └── Exporter Agent   → writes Excel, returns confirmation
-                        │
-                        ▼
-                 Orchestrator sorts → prints results table
+        │   Creates team + task list
+        ▼
+   ┌─────────────┬──────────────┬──────────────┬─────────────┐
+   │  SEARCHER   │  EXTRACTOR   │  PROCESSOR   │  EXPORTER   │
+   │  teammate   │  teammate    │  teammate    │  teammate   │
+   └──────┬──────┴──────┬───────┴──────┬───────┴──────┬──────┘
+          │             │              │              │
+   claims [search]      │              │              │
+   writes raw JSON      │              │              │
+          │             │              │              │
+          └──► unblocks [extract]      │              │
+                        │              │              │
+               claims [extract]        │              │
+               writes extracted JSON   │              │
+                        │              │              │
+                        └──► unblocks [process] and [export] simultaneously
+                                       │              │
+                              claims [process] claims [export]
+                              filters hotels   writes Excel
+                              writes processed │
+                                       │        │
+                                       └────────┘
+                                            │
+                                        Lead sorts → prints table
 ```
 
-- **Real subagents:** each stage is a genuine Claude instance with its own context and tools
-- **Parallel spawning:** Setup + Searcher launch simultaneously; Processor + Exporter launch simultaneously
-- **Typed handoffs:** agents communicate via JSON passed in prompts — no shared state
-- **Self-directing:** `CLAUDE.md` Orchestrator Protocol drives all behavior; nothing is configured manually
+Key behaviors:
+- **Full teammate sessions:** each role is a separate Claude Code instance with its own context window and tmux pane
+- **Shared task list:** dependencies are enforced automatically — `process` and `export` stay blocked until `extract` completes, then both unblock simultaneously
+- **File-based handoffs:** teammates communicate through `data/` files, not through the lead's context
+- **Self-directing:** `CLAUDE.md` defines the Orchestrator Protocol; the lead reads it and runs
 
 ---
 
 ## How to Run
 
-Open this project in Claude Code and type a search request:
+Open the project in Claude Code and type a search request:
 
 ```bash
 cd HotelAIExtractor
@@ -60,7 +73,7 @@ Search Bangkok hotels, check-in 2026-06-01, check-out 2026-06-04,
 max price $150, min rating 7.5, sort by rating
 ```
 
-Claude reads the Orchestrator Protocol from `CLAUDE.md` and coordinates the full agent team. No scripts to run, no configuration needed.
+The lead reads the Orchestrator Protocol from `CLAUDE.md`, creates the agent team, sets up the task list, and each teammate claims its task when dependencies clear. In tmux, each teammate appears in its own pane.
 
 ---
 
@@ -69,7 +82,9 @@ Claude reads the Orchestrator Protocol from `CLAUDE.md` and coordinates the full
 | File | Description |
 |---|---|
 | `output/hotels_{destination}_{date}.xlsx` | Formatted Excel report |
-| `data/processed_{destination}_{date}.json` | Sorted JSON dataset |
+| `data/processed_{destination}_{date}.json` | Filtered sorted JSON |
+| `data/extracted_{destination}_{date}.json` | Normalized (pre-filter) JSON |
+| `data/raw_{destination}_{date}.json` | Raw search output |
 
 **Excel columns:** `#`, Hotel Name, Price/Night (USD), Total Price (3n), Rating, Location  
 Styled with dark blue header, alternating row shading, frozen top row.
@@ -78,16 +93,15 @@ Styled with dark blue header, alternating row shading, frozen top row.
 
 ## Agent Team
 
-| Agent | Role |
-|---|---|
-| **Orchestrator** | Main Claude session — spawns subagents via `Agent` tool, assembles final table |
-| **Setup** | Installs deps, creates `output/`, `data/` directories |
-| **Searcher** | Discovers hotels, returns raw JSON array |
-| **Extractor** | Normalizes raw records — price, rating, location, totals |
-| **Processor** | Filters by max price and min rating |
-| **Exporter** | Writes sorted hotels to Excel |
+| Role | Type | Task | Reads | Writes |
+|------|------|------|-------|--------|
+| **Lead** | Claude Code session | Coordinates team, prints final table | — | — |
+| **Searcher** | Teammate | `search` | — | `data/raw_*.json` |
+| **Extractor** | Teammate | `extract` (depends: search) | `data/raw_*.json` | `data/extracted_*.json` |
+| **Processor** | Teammate | `process` (depends: extract) | `data/extracted_*.json` | `data/processed_*.json` |
+| **Exporter** | Teammate | `export` (depends: extract) | `data/extracted_*.json` | `output/hotels_*.xlsx` |
 
-Each agent calls a dedicated script via Bash and returns JSON to the Orchestrator.
+`process` and `export` depend on `extract` but not each other — they run in parallel.
 
 ---
 
@@ -103,7 +117,7 @@ sort_by       "rating" (default) or "price"
 max_results   Cap on results — default 20
 ```
 
-Claude extracts all of these from your natural-language request.
+The lead extracts all of these from your natural-language request.
 
 ---
 
@@ -112,21 +126,21 @@ Claude extracts all of these from your natural-language request.
 ```
 HotelAIExtractor/
 ├── README.md                  ← You are here
-├── CLAUDE.md                  ← Agent roles + Orchestrator Protocol
+├── CLAUDE.md                  ← Agent team roles + Orchestrator Protocol
 ├── WORKSHOP_GUIDE.md          ← Step-by-step presenter guide
 ├── .claude/
-│   └── settings.json          ← CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
+│   └── settings.json          ← CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1, teammateMode: tmux
 ├── scripts/
-│   ├── search.py              ← Searcher agent tool
-│   ├── extract.py             ← Extractor agent tool
-│   ├── process.py             ← Processor agent tool
-│   ├── export.py              ← Exporter agent tool
-│   ├── run_demo.sh            ← tmux architecture visualization
-│   └── start_agent_pane.sh    ← Per-agent pane styling
+│   ├── search.py              ← Searcher teammate tool  (--output for file handoff)
+│   ├── extract.py             ← Extractor teammate tool (--input / --output)
+│   ├── process.py             ← Processor teammate tool (--input / --output)
+│   └── export.py              ← Exporter teammate tool  (--input)
 ├── data/
-│   └── processed_*.json       ← Sorted JSON output
+│   ├── raw_*.json             ← Searcher output
+│   ├── extracted_*.json       ← Extractor output
+│   └── processed_*.json       ← Processor output
 └── output/
-    └── hotels_*.xlsx          ← Final Excel reports
+    └── hotels_*.xlsx          ← Final Excel report
 ```
 
 ---
@@ -135,36 +149,30 @@ HotelAIExtractor/
 
 | Layer | Technology |
 |---|---|
-| AI orchestration | Claude Code + Claude Sonnet |
-| Agent spawning | `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` + `Agent` tool |
-| Agent instructions | `CLAUDE.md` Orchestrator Protocol |
-| Agent I/O | JSON over stdout — each script has `--agent` mode |
-| Architecture visualization | tmux 5-pane layout with per-agent color coding |
+| AI coordination | Claude Code Agent Teams |
+| Team feature flag | `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` |
+| Display mode | `"teammateMode": "tmux"` — one pane per teammate |
+| Team instructions | `CLAUDE.md` Orchestrator Protocol |
+| Inter-teammate I/O | File-based JSON handoffs via `data/` |
+| Export | `openpyxl` (Excel) |
 | Data | Realistic mock hotel data (Bangkok, Singapore) |
-| Export | `openpyxl` (Excel), JSON |
 
 ---
 
 ## Extending the Project
 
 | Goal | What to change |
-|---|---|
+|------|----------------|
 | Real hotel data | Replace `search.py` with a hotel API call |
-| Different destination | Pass it in your chat message — no reconfiguration |
-| Email the report | Add a Notifier agent to the Orchestrator Protocol |
+| Different destination | Pass it in your chat message |
+| Email the report | Add a Notifier teammate to the Orchestrator Protocol |
 | Google Sheets output | Replace `export.py` |
-| Multi-city search | Spawn one Searcher Agent per city simultaneously |
-| Add review sentiment | Add Analyst agent between Extractor and Processor |
+| Multi-city search | Spawn one Searcher teammate per city — parallel `search` tasks |
+| Add review sentiment | Add Analyst teammate between Extractor and Processor |
 | Schedule daily runs | Claude Code `/schedule` |
-
----
-
-## Demo
-
-See `WORKSHOP_GUIDE.md` for the full presenter guide — step-by-step walkthrough, talking points for each Agent tool call, and Q&A.
 
 ---
 
 ## Note on Data Source
 
-The Searcher uses realistic mock data modeled on real Bangkok and Singapore hotels. To use live data, replace `scripts/search.py` with calls to a hotel data API (e.g. RapidAPI Hotels, Expedia Affiliate Network). All other agents are unchanged.
+The Searcher uses realistic mock data modeled on real Bangkok and Singapore hotels. To use live data, replace `scripts/search.py` with calls to a hotel data API (e.g. RapidAPI Hotels, Expedia Affiliate Network). The output file schema is the contract — all other teammates are unchanged.

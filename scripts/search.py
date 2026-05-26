@@ -87,6 +87,7 @@ def search_hotels(destination, checkin, checkout, max_price=150.0, min_rating=7.
 
 if __name__ == "__main__":
     import argparse, json
+    from pathlib import Path
     p = argparse.ArgumentParser(description="Searcher agent — outputs raw hotel JSON")
     p.add_argument("--destination", default="Bangkok")
     p.add_argument("--checkin",     default="2026-06-01")
@@ -94,7 +95,8 @@ if __name__ == "__main__":
     p.add_argument("--max-price",   type=float, default=150.0, dest="max_price")
     p.add_argument("--min-rating",  type=float, default=7.5,   dest="min_rating")
     p.add_argument("--max-results", type=int,   default=20,    dest="max_results")
-    p.add_argument("--agent",       action="store_true", help="Silent JSON mode for subagent use")
+    p.add_argument("--agent",       action="store_true", help="Silent JSON mode for teammate use")
+    p.add_argument("--output",      help="Write JSON to file (teammate file handoff)")
     args = p.parse_args()
 
     hotels = list(search_hotels(
@@ -103,4 +105,9 @@ if __name__ == "__main__":
         delay=0 if args.agent else 0.4,
         silent=args.agent,
     ))
-    print(json.dumps(hotels))
+    if args.output:
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        with open(args.output, "w") as f:
+            json.dump(hotels, f, indent=2)
+    else:
+        print(json.dumps(hotels))

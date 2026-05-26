@@ -51,14 +51,20 @@ def append_hotel(hotel, row_num, path, lock):
 if __name__ == "__main__":
     import argparse, json, threading
     p = argparse.ArgumentParser(description="Exporter agent — writes hotels to Excel")
-    p.add_argument("--hotels", required=True, help="JSON array of extracted hotel dicts (sorted)")
+    p.add_argument("--hotels", help="JSON array of hotel dicts (use --input for file handoff)")
+    p.add_argument("--input",  help="Read hotels from JSON file (teammate file handoff)")
     p.add_argument("--path",   required=True, help="Output Excel file path")
     args = p.parse_args()
 
-    hotels = json.loads(args.hotels)
-    path   = Path(args.path)
+    if args.input:
+        with open(args.input) as f:
+            hotels = json.load(f)
+    else:
+        hotels = json.loads(args.hotels)
+
+    path = Path(args.path)
     init_excel(path)
-    lock   = threading.Lock()
+    lock = threading.Lock()
     for i, hotel in enumerate(hotels, 1):
         append_hotel(hotel, i, path, lock)
     print(json.dumps({"status": "ok", "rows_written": len(hotels), "path": str(path)}))

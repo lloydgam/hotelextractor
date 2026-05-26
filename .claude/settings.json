@@ -5,6 +5,7 @@
     // "ANTHROPIC_MODEL": "claude-fast"
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
+  "teammateMode": "tmux",
   "hasCompletedOnboarding": true,
   "preferredAuthMethod": "console",
   "permissions": {
