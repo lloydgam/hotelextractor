@@ -1,71 +1,93 @@
 # HotelAIExtractor
 
 ## Project Overview
-A **Hotel Price Intelligence System** powered by a coordinated agent team. The orchestrator receives user search filters and delegates to specialized agents that search, extract, process, and export hotel data — producing a sorted Excel report automatically.
+A **Hotel Price Intelligence System** powered by a streaming multi-agent pipeline. Each hotel flows through a chain of specialized agents the moment it is discovered — no waiting for the full batch. The Orchestrator coordinates the team; each agent has one job and hands off immediately.
 
 ---
 
 ## Agent Team
 
 ### Orchestrator (Claude — main session)
-- Receives user filters, validates nothing, asks nothing
-- Spawns and coordinates the agent team
-- Collects results, prints the final table, confirms output file
+- Receives user filters, asks nothing, runs immediately
+- Spawns Setup Agent and pipeline in parallel
+- Prints the final results table and confirms the Excel path
 
 ### Agent: Setup
 - **Role:** Environment preparation
-- **Tasks:** Create folder structure (`output/`, `data/`, `scripts/`), install Python dependencies
-- **Runs:** Once at project start or on first run
+- **Runs:** Once on first run (or when deps are missing)
+- **Tasks:** Create `output/`, `data/`, `scripts/`; install Python dependencies
 
-### Agent: Searcher
-- **Role:** Query Agoda with user filters, collect raw hotel listings
-- **Tasks:** Build search URL, fetch pages, stop once 20+ results are in hand
-- **Output:** Raw data saved to `data/raw_{destination}_{YYYY-MM-DD}.json`
+### Agent: Searcher  `scripts/search.py`
+- **Role:** Discover hotels one at a time (streaming generator)
+- **Behavior:** Yields each hotel the moment it is found — does not wait to collect all results before passing them on
+- **Stops:** As soon as 20 hotels have been yielded
 
-### Agent: Extractor
-- **Role:** Parse raw HTML/JSON, pull structured fields
-- **Tasks:** Extract hotel name, price, rating, location from raw data
-- **Output:** Structured records saved to `data/extracted_{destination}_{YYYY-MM-DD}.json`
+### Agent: Extractor  `scripts/extract.py`
+- **Role:** Normalize one raw hotel record
+- **Triggered:** Immediately when Searcher yields a hotel
+- **Output:** `{hotel_name, price_usd, total_price_usd, rating, location, nights}`
 
-### Agent: Processor
-- **Role:** Filter, deduplicate, sort, and trim results
-- **Tasks:** Apply user filters (max price, min rating, property type, star rating), sort by requested field, keep top 20
-- **Output:** Clean dataset ready for export
+### Agent: Processor  `scripts/process.py`
+- **Role:** Apply filters to one extracted hotel
+- **Runs in parallel with:** Exporter (same hotel, same moment)
+- **Returns:** Hotel if it passes all filters, else `None`
 
-### Agent: Exporter
-- **Role:** Generate deliverables
-- **Tasks:** Write Excel file to `output/hotels_{destination}_{YYYY-MM-DD}.xlsx`, return table for inline display
+### Agent: Exporter  `scripts/export.py`
+- **Role:** Append one hotel row to the Excel file (thread-safe)
+- **Runs in parallel with:** Processor (same hotel, same moment)
+- **Output:** Appends to `output/hotels_{destination}_{YYYY-MM-DD}.xlsx`
 
 ---
 
-## Execution Flow
+## Streaming Pipeline Flow
+
+Every hotel travels the same path independently and concurrently:
 
 ```
-User Input
-    │
-    ▼
-Orchestrator
-    ├── [parallel] Setup Agent
-    └── [parallel] Searcher Agent
-            │
-            ▼
-        Extractor Agent
-            │
-            ▼
-        Processor Agent
-            │
-            ▼
-        Exporter Agent
-            │
-            ▼
-    Print table in chat + confirm Excel path
+[Searcher] yields hotel_1 ─────────────────────────────────────────────────┐
+[Searcher] yields hotel_2 ─────────────────────────────────┐               │
+[Searcher] yields hotel_3 ─────────────────┐               │               │
+                                           ▼               ▼               ▼
+                                      [Extractor]     [Extractor]     [Extractor]
+                                           │               │               │
+                                    [Proc ∥ Exp]    [Proc ∥ Exp]    [Proc ∥ Exp]
+                                           │               │               │
+                                        ✓ done          ✓ done          ✓ done
+                                                              │
+                                                    Final sort + Excel rewrite
+                                                    Print results table
 ```
 
 **Rules:**
-- Setup and Searcher run in parallel on first launch
-- Extractor, Processor, Exporter run sequentially (each depends on prior output)
-- Stop fetching at 20+ results — no over-pagination
-- Never ask the user to confirm or clarify — run immediately with what was given
+- Setup and first pipeline run launch in parallel
+- Within each hotel: Extractor runs first (sequential), then Processor + Exporter fire simultaneously (parallel)
+- All hotels flow through the pipeline concurrently (up to 8 threads)
+- Stop at 20 results — no over-fetching
+- Never ask the user to confirm — run immediately with given filters
+
+---
+
+## Entry Point
+
+```bash
+python3 scripts/pipeline.py
+```
+
+Or call from Orchestrator:
+
+```python
+from scripts.pipeline import run_pipeline
+
+run_pipeline(
+    destination = "Bangkok",
+    checkin     = "2026-06-01",
+    checkout    = "2026-06-04",
+    max_price   = 150.0,
+    min_rating  = 7.5,
+    sort_by     = "rating",   # or "price"
+    max_results = 20,
+)
+```
 
 ---
 
@@ -73,10 +95,12 @@ Orchestrator
 
 | Field | Description |
 |---|---|
-| **Hotel Name** | Full property name |
-| **Price** | Nightly rate (note currency) |
-| **Rating** | Guest review score |
-| **Location** | District or area |
+| **hotel_name** | Full property name |
+| **price_usd** | Nightly rate in USD |
+| **total_price_usd** | price × nights |
+| **rating** | Guest review score (0–10) |
+| **location** | District or area |
+| **nights** | Length of stay |
 
 ---
 
@@ -84,29 +108,28 @@ Orchestrator
 
 | Filter | Notes |
 |---|---|
-| **Destination** | City or region — required |
-| **Check-in / Check-out** | Date range — required |
-| **Max Price** | Upper budget limit |
-| **Min Rating** | e.g. 7.0+ |
-| **Sort By** | `price` (default), `rating`, `distance` |
-| **Star Rating** | 1–5 stars |
-| **Property Type** | hotel, hostel, resort, apartment |
+| **destination** | City or region — required |
+| **checkin / checkout** | ISO date strings — required |
+| **max_price** | Upper budget limit per night |
+| **min_rating** | e.g. `7.5` |
+| **sort_by** | `rating` (default) or `price` |
+| **max_results** | Cap on results, default `20` |
 
 ---
 
-## Output
+## File Outputs
 
-- Excel report: `output/hotels_{destination}_{YYYY-MM-DD}.xlsx`
-- Raw data: `data/raw_{destination}_{YYYY-MM-DD}.json`
-- Extracted data: `data/extracted_{destination}_{YYYY-MM-DD}.json`
+| File | Description |
+|---|---|
+| `output/hotels_{destination}_{checkin}.xlsx` | Final sorted Excel report |
+| `data/processed_{destination}_{checkin}.json` | Final sorted JSON |
 
 ---
 
 ## Guidelines
 
-- Use the `Agent` tool to spawn each named agent above
-- Run independent agents in a single message (parallel spawning)
-- Run dependent agents sequentially, only after prior output is ready
-- Use Python: `requests`, `beautifulsoup4`, `openpyxl`, `pandas`, `lxml`
-- Keep scripts in `scripts/` and make them reusable for future runs
+- `scripts/pipeline.py` is the single entry point — it orchestrates all agents internally
+- Each agent script exports one function: `search_hotels()`, `extract_one()`, `process_one()`, `append_hotel()`
 - Never over-engineer — each agent does one thing and exits
+- Keep `data/` for intermediate files, `output/` for final deliverables
+- `dangerouslyAllowAll: true` is set in `.claude/settings.json` — no permission prompts

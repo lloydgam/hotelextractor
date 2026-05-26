@@ -4,139 +4,159 @@
     "price_usd": 147.0,
     "total_price_usd": 441.0,
     "rating": 9.5,
-    "location": "Riverside"
+    "location": "Riverside",
+    "nights": 3
+  },
+  {
+    "hotel_name": "Mandarin Oriental Bangkok",
+    "price_usd": 135.0,
+    "total_price_usd": 405.0,
+    "rating": 9.4,
+    "location": "Riverside",
+    "nights": 3
   },
   {
     "hotel_name": "Siam Kempinski Hotel Bangkok",
     "price_usd": 149.0,
     "total_price_usd": 447.0,
     "rating": 9.3,
-    "location": "Siam"
+    "location": "Siam",
+    "nights": 3
+  },
+  {
+    "hotel_name": "The Peninsula Bangkok",
+    "price_usd": 142.0,
+    "total_price_usd": 426.0,
+    "rating": 9.2,
+    "location": "Riverside",
+    "nights": 3
   },
   {
     "hotel_name": "Shangri-La Bangkok",
     "price_usd": 148.0,
     "total_price_usd": 444.0,
     "rating": 9.1,
-    "location": "Riverside"
+    "location": "Riverside",
+    "nights": 3
+  },
+  {
+    "hotel_name": "Four Seasons Bangkok",
+    "price_usd": 144.0,
+    "total_price_usd": 432.0,
+    "rating": 9.1,
+    "location": "Chao Phraya",
+    "nights": 3
   },
   {
     "hotel_name": "Anantara Riverside Bangkok Resort",
     "price_usd": 143.0,
     "total_price_usd": 429.0,
     "rating": 9.0,
-    "location": "Riverside"
+    "location": "Riverside",
+    "nights": 3
   },
   {
     "hotel_name": "Arun Residence",
     "price_usd": 55.0,
     "total_price_usd": 165.0,
     "rating": 9.0,
-    "location": "Old City"
+    "location": "Old City",
+    "nights": 3
   },
   {
     "hotel_name": "Centara Grand at CentralWorld",
     "price_usd": 140.0,
     "total_price_usd": 420.0,
     "rating": 8.9,
-    "location": "Siam"
+    "location": "Siam",
+    "nights": 3
+  },
+  {
+    "hotel_name": "VIE Hotel Bangkok MGallery",
+    "price_usd": 125.0,
+    "total_price_usd": 375.0,
+    "rating": 8.9,
+    "location": "Siam",
+    "nights": 3
+  },
+  {
+    "hotel_name": "SO/ Bangkok",
+    "price_usd": 125.0,
+    "total_price_usd": 375.0,
+    "rating": 8.8,
+    "location": "Silom",
+    "nights": 3
   },
   {
     "hotel_name": "The Westin Grande Sukhumvit",
     "price_usd": 145.0,
     "total_price_usd": 435.0,
     "rating": 8.8,
-    "location": "Sukhumvit"
+    "location": "Sukhumvit",
+    "nights": 3
   },
   {
     "hotel_name": "Sala Rattanakosin Hotel",
     "price_usd": 110.0,
     "total_price_usd": 330.0,
     "rating": 8.8,
-    "location": "Old City"
+    "location": "Old City",
+    "nights": 3
+  },
+  {
+    "hotel_name": "Sindhorn Midtown Hotel Bangkok",
+    "price_usd": 120.0,
+    "total_price_usd": 360.0,
+    "rating": 8.7,
+    "location": "Langsuan",
+    "nights": 3
   },
   {
     "hotel_name": "Pullman Bangkok Hotel G",
     "price_usd": 130.0,
     "total_price_usd": 390.0,
     "rating": 8.7,
-    "location": "Silom"
+    "location": "Silom",
+    "nights": 3
   },
   {
     "hotel_name": "Riva Surya Bangkok",
     "price_usd": 99.0,
     "total_price_usd": 297.0,
     "rating": 8.7,
-    "location": "Riverside"
+    "location": "Riverside",
+    "nights": 3
   },
   {
     "hotel_name": "The Sukhumvit Hotel Bangkok",
     "price_usd": 98.0,
     "total_price_usd": 294.0,
     "rating": 8.6,
-    "location": "Sukhumvit"
+    "location": "Sukhumvit",
+    "nights": 3
   },
   {
     "hotel_name": "Amari Bangkok",
     "price_usd": 118.0,
     "total_price_usd": 354.0,
     "rating": 8.6,
-    "location": "Siam"
+    "location": "Siam",
+    "nights": 3
   },
   {
     "hotel_name": "Novotel Bangkok on Siam Square",
     "price_usd": 108.0,
     "total_price_usd": 324.0,
     "rating": 8.5,
-    "location": "Siam"
+    "location": "Siam",
+    "nights": 3
   },
   {
     "hotel_name": "Novotel Bangkok Sukhumvit 20",
     "price_usd": 112.0,
     "total_price_usd": 336.0,
     "rating": 8.4,
-    "location": "Sukhumvit"
-  },
-  {
-    "hotel_name": "Citadines Sukhumvit 8 Bangkok",
-    "price_usd": 87.0,
-    "total_price_usd": 261.0,
-    "rating": 8.3,
-    "location": "Sukhumvit"
-  },
-  {
-    "hotel_name": "Holiday Inn Bangkok Silom",
-    "price_usd": 95.0,
-    "total_price_usd": 285.0,
-    "rating": 8.2,
-    "location": "Silom"
-  },
-  {
-    "hotel_name": "ibis Bangkok Sukhumvit 24",
-    "price_usd": 58.0,
-    "total_price_usd": 174.0,
-    "rating": 8.1,
-    "location": "Sukhumvit"
-  },
-  {
-    "hotel_name": "Mercure Bangkok Siam",
-    "price_usd": 82.0,
-    "total_price_usd": 246.0,
-    "rating": 8.0,
-    "location": "Siam"
-  },
-  {
-    "hotel_name": "Narai Hotel Bangkok",
-    "price_usd": 72.0,
-    "total_price_usd": 216.0,
-    "rating": 7.9,
-    "location": "Silom"
-  },
-  {
-    "hotel_name": "Tawana Bangkok Hotel",
-    "price_usd": 65.0,
-    "total_price_usd": 195.0,
-    "rating": 7.7,
-    "location": "Silom"
+    "location": "Sukhumvit",
+    "nights": 3
   }
 ]
